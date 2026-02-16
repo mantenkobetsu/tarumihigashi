@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>単語暗記アプリ</title>
+     <style>
+        :root {
+            --bg: #f8fafc;
+            --white: #ffffff;
+            --accent: #1e293b;
+            --en-color: #3b82f6;
+            --sci-color: #10b981;
+            --his-color: #f59e0b;
+            --geo-color: #059669;
+            --text: #334155;
+            --btn-test: #ef4444;
+            --btn-anki: #3b82f6;
+            --alert-bg: #fff1f2;
+            --alert-text: #e11d48;
+        }
+
+        body { 
+            font-family: 'Helvetica Neue', Arial, 'Hiragino Kaku Gothic ProN', 'Hiragino Sans', Meiryo, sans-serif; 
+            background-color: var(--bg); 
+            color: var(--text); 
+            margin: 0; 
+            padding: 0; 
+            line-height: 1.6;
+        }
+
+        /* Header Styling */
+        .app-header { 
+            background: var(--white); 
+            padding: 24px 20px; 
+            text-align: center; 
+            border-bottom: 1px solid #e2e8f0; 
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+            margin-bottom: 10px;
+        }
+        .school-badge { 
+            display: inline-block;
+            background: var(--alert-bg);
+            color: var(--alert-text);
+            font-size: 0.75rem;
+            font-weight: bold;
+            padding: 2px 12px;
+            border-radius: 20px;
+            margin-bottom: 8px;
+            border: 1px solid #fda4af;
+        }
+        .app-header h1 { 
+            margin: 0; 
+            font-size: 1.4rem; 
+            font-weight: 900; 
+            color: var(--accent);
+            letter-spacing: -0.025em;
+        }
+        .app-header p { 
+            margin: 6px 0 0; 
+            font-size: 0.85rem; 
+            color: #64748b; 
+        }
+        .warning-box {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            background: #f1f5f9;
+            padding: 8px 16px;
+            border-radius: 8px;
+            margin-top: 14px;
+            font-size: 0.75rem;
+            color: #475569;
+            width: fit-content;
+            max-width: 90%;
+        }
+
+        .container { padding: 15px; max-width: 600px; margin: 0 auto; }
+
+        .tabs { display: flex; gap: 8px; margin-bottom: 20px; }
+        .tab-label { 
+            flex: 1; padding: 12px 0; text-align: center; background: #e2e8f0; cursor: pointer; 
+            font-weight: bold; border-radius: 10px; color: #64748b; font-size: 0.85rem; transition: all 0.2s;
+        }
+        input[type="radio"] { display: none; }
+
+        .tab-content { display: none; animation: fadeIn 0.3s ease-in-out; }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        #g1:checked ~ .tabs label[for="g1"],
+        #g2:checked ~ .tabs label[for="g2"],
+        #g3:checked ~ .tabs label[for="g3"] {
+            background: var(--accent); color: var(--white);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        details { background: var(--white); margin-bottom: 12px; border-radius: 12px; border: 1px solid #e2e8f0; overflow: hidden; transition: all 0.3s; }
+        details[open] { box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+        
+        summary { 
+            padding: 18px; cursor: pointer; font-weight: bold; list-style: none;
+            display: flex; justify-content: space-between; align-items: center; font-size: 0.95rem;
+        }
+        summary::-webkit-details-marker { display: none; }
+        summary::after { content: "＋"; font-size: 1.2rem; color: #94a3b8; transition: 0.3s; }
+        details[open] summary::after { transform: rotate(45deg); content: "＋"; }
+
+        .subj-crown { border-left: 6px solid #3b82f6; }
+        .subj-horizon { border-left: 6px solid #2563eb; }
+        .subj-sunshine { border-left: 6px solid #1d4ed8; }
+        .subj-sci { border-left: 6px solid var(--sci-color); }
+        .subj-his { border-left: 6px solid var(--his-color); }
+        .subj-geo { border-left: 6px solid var(--geo-color); }
+
+        .page-list { list-style: none; padding: 0; margin: 0; border-top: 1px solid #f1f5f9; }
+        .page-item { 
+            display: flex; justify-content: space-between; align-items: center; 
+            padding: 14px 18px; border-bottom: 1px solid #f1f5f9; 
+            background: #fff;
+        }
+        .page-item:last-child { border-bottom: none; }
+        .p-range { font-weight: 600; font-size: 0.85rem; color: #475569; }
+
+        .btn-group { display: flex; gap: 8px; }
+        .action-btn { 
+            text-decoration: none; font-size: 0.75rem; font-weight: bold; padding: 8px 14px; 
+            border-radius: 8px; color: #fff; min-width: 50px; text-align: center;
+            transition: 0.2s; display: inline-block;
+        }
+        .btn-anki { background-color: var(--btn-anki); box-shadow: 0 2px 0 #2563eb; }
+        .btn-test { background-color: var(--btn-test); box-shadow: 0 2px 0 #dc2626; }
+        
+        .action-btn:active { transform: translateY(2px); box-shadow: none; }
+        
+        .btn-disabled { 
+            background-color: #e2e8f0; 
+            color: #94a3b8;
+            box-shadow: none;
+            cursor: default; 
+            pointer-events: none; 
+        }
+
+        #g1:checked ~ #content-area .content-g1 { display: block; }
+        #g2:checked ~ #content-area .content-g2 { display: block; }
+        #g3:checked ~ #content-area .content-g3 { display: block; }
+    </style>
+</head>
+<body>
+
+<header class="app-header">
+    <div class="school-badge">垂水東中学校 学年末テスト用</div>
+    <h1>テスト対策！単語暗記アプリ</h1>
+    <p>学年と科目を選んで学習を始めよう</p>
+    <div class="warning-box">
+        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+        テスト範囲は少しずれることがあるよ
+    </div>
+</header>
+
+<div class="container">
+    <input type="radio" name="grade" id="g1" checked>
+    <input type="radio" name="grade" id="g2">
+
+    <div class="tabs">
+        <label class="tab-label" for="g1">中学1年</label>
+        <label class="tab-label" for="g2">中学2年</label>
+    </div>
+
+    <div id="content-area"></div>
+</div>
+
+<script>
+    const baseURL = "https://mantenlab.com/vocabulary-test/";
+    
+    const data = {
+        g1: {
+            "英語 (NEW HORIZON)": ["1_English_NH_U4.html", "1_English_NH_U5.html", "1_English_NH_U6.html", "1_English_NH_U7.html", "1_English_NH_U8.html", "1_English_NH_U9.html", "1_English_NH_U10.html", "1_English_NH_LR.html"],
+            "理科": [
+                "1_rika_2-17.html", "1_rika_20-30.html", "1_rika_31-34.html", "1_rika_36-52.html", "1_rika_64-82.html", 
+                "1_rika_84-97.html", "1_rika_100-117.html", "1_rika_128,129137-149.html", "1_rika_151-160.html", 
+                "1_rika_161-172.html", "1_rika_173-188.html", "1_rika_201-212.html", "1_rika_214-220.html", 
+                "1_rika_223-230.html", "1_rika_233-247.html"
+            ],
+            "歴史": [
+                "1_rekishi_32-35.html", "1_rekishi_38-39.html", "1_rekishi_40-41.html", "1_rekishi_42-43.html", 
+                "1_rekishi_44-49.html", "1_rekishi_54-55.html", "1_rekishi_56-59.html",
+                "1_rekishi_63-67.html", "1_rekishi_68-69.html", "1_rekishi_70-71.html", "1_rekishi_72-75.html", 
+                "1_rekishi_78-81.html", "1_rekishi_84-85.html", "1_rekishi_86-89.html", "1_rekishi_92-95.html", 
+                "1_rekishi_96-97.html", "1_rekishi_98-101.html", "1_rekishi_105-107.html", "1_rekishi_108-111.html", 
+                "1_rekishi_112-113.html", "1_rekishi_116-117.html", "1_rekishi_118-119.html", "1_rekishi_120-123.html", 
+                "1_rekishi_124-125.html", "1_rekishi_126-127.html", "1_rekishi_128-129.html", "1_rekishi_130-131.html", 
+                "1_rekishi_136-139.html", "1_rekishi_140-141.html", "1_rekishi_142-143.html", "1_rekishi_144-145.html", 
+                "1_rekishi_146-149.html"
+            ],
+            "地理": [
+                "1_chiri_48-51.html", "1_chiri_52-55.html", "1_chiri_48-55.html", "1_chiri_56-57.html", 
+                "1_chiri_58-61.html", "1_chiri_66-67.html", "1_chiri_68-71.html", "1_chiri_72-75.html", 
+                "1_chiri_76-77.html", "1_chiri_82-83.html", "1_chiri_84-87.html", "1_chiri_94-97.html", 
+                "1_chiri_98-99.html", "1_chiri_100-101.html", "1_chiri_102-103.html", "1_chiri_108-111.html", 
+                "1_chiri_112-113.html", "1_chiri_114-115.html", "1_chiri_120-123.html", "1_chiri_124-125.html"
+            ]
+        },
+        g2: {
+            "英語 (NEW CROWN)": ["2_English_NC_L4.html", "2_English_NC_L5.html", "2_English_NC_L6.html", "2_English_NC_L7.html", "2_English_NC_L8.html", "2_English_NC_RL2.html", "2_English_NC_RL3.html"],
+            "理科": [
+                "2_rika_5-17.html", "2_rika_18-24.html", "2_rika_25-32.html", "2_rika_34-43.html", "2_rika_44-49.html", 
+                "2_rika_51-59.html", "2_rika_70-79.html", "2_rika_80-91.html", "2_rika_94-107.html", "2_rika_108-123.html", 
+                "2_rika_141-152.html", "2_rika_153-171.html", "2_rika_173-177.html", "2_rika_178-188.html", "2_rika_189-199.html", 
+                "2_rika_211-224.html", "2_rika_225-234.html", "2_rika_235-241.html", "2_rika_242-252.html", "2_rika_255-261.html", 
+                "2_rika_262-271.html"
+            ],
+            "歴史": [
+                "2_rekishi_100-101.html", "2_rekishi_104-105.html", "2_rekishi_106-107.html", "2_rekishi_108-111.html",
+                "2_rekishi_112-113.html", "2_rekishi_114-115.html", "2_rekishi_116-117.html", "2_rekishi_118-121.html",
+                "2_rekishi_124-125.html", "2_rekishi_126-129.html",
+                "2_rekishi_132-133.html", "2_rekishi_134-137.html", "2_rekishi_138-141.html", "2_rekishi_142-145.html", 
+                "2_rekishi_148-149.html", "2_rekishi_150-153.html", "2_rekishi_154-161.html", "2_rekishi_162-163.html", 
+                "2_rekishi_164-165.html", "2_rekishi_166-167.html", "2_rekishi_170-171.html", "2_rekishi_172-173.html", 
+                "2_rekishi_174-175.html", "2_rekishi_178-179.html", "2_rekishi_180-185.html", "2_rekishi_186-187.html"
+            ],
+            "地理": [
+                "2_chiri_174-175.html", "2_chiri_176-179.html", "2_chiri_180-183.html", "2_chiri_190-193.html", 
+                "2_chiri_194-197.html", "2_chiri_198-199.html", "2_chiri_206-209.html", "2_chiri_210-213.html", 
+                "2_chiri_214-216.html", "2_chiri_222-225.html", "2_chiri_226-227.html", "2_chiri_228-229.html",
+                "2_chiri_230-233.html", "2_chiri_238-239.html", "2_chiri_240-243.html", "2_chiri_244-249.html",
+                "2_chiri_256-259.html", "2_chiri_260-261.html", "2_chiri_262-265.html", "2_chiri_273-275.html",
+                "2_chiri_276-279.html", "2_chiri_280-284.html"
+            ]
+        }
+    };
+
+    const subjectStyles = {
+        "英語 (NEW HORIZON)": "subj-horizon",
+        "英語 (NEW CROWN)": "subj-crown",
+        "理科": "subj-sci",
+        "歴史": "subj-his",
+        "地理": "subj-geo"
+    };
+
+    function formatLabel(fileName) {
+        const nameWithoutExt = fileName.replace('.html', '').replace('ap', '');
+        const parts = nameWithoutExt.split('_');
+        const lastPart = parts[parts.length - 1].toLowerCase();
+        
+        if (lastPart.startsWith('p')) return `Program ${lastPart.substring(1)}`;
+        if (lastPart.startsWith('u')) return `Unit ${lastPart.substring(1)}`;
+        if (lastPart.startsWith('l') && !lastPart.startsWith('rl')) return `Lesson ${lastPart.substring(1)}`;
+        if (lastPart.startsWith('r') && !lastPart.startsWith('rl')) return `Reading ${lastPart.substring(1)}`;
+        if (lastPart.startsWith('rl')) {
+            const num = lastPart.substring(2);
+            return num ? `Reading Lesson ${num}` : "Read Aloud";
+        }
+        return lastPart.toUpperCase();
+    }
+
+    function formatRangeLabel(fileName) {
+        const match = fileName.match(/_([0-9,\-]+)(ap)?\.html$/);
+        return match ? "教科書 P." + match[1] : fileName;
+    }
+
+    function render() {
+        const contentArea = document.getElementById('content-area');
+        let finalHtml = "";
+
+        [1, 2].forEach(gradeNum => {
+            finalHtml += `<div class="tab-content content-g${gradeNum}">`;
+            const gradeKey = `g${gradeNum}`;
+            const gradeData = data[gradeKey];
+            
+            const displaySubjects = [
+                "英語 (NEW HORIZON)", "英語 (NEW CROWN)", 
+                "理科", "歴史", "地理"
+            ];
+
+            displaySubjects.forEach(subName => {
+                if (gradeNum === 1 && subName === "英語 (NEW CROWN)") return;
+                if (gradeNum === 2 && subName === "英語 (NEW HORIZON)") return;
+                
+                const cssClass = subjectStyles[subName] || "";
+                const files = gradeData[subName] || [];
+                const isRangeType = subName === "理科" || subName === "歴史" || subName === "地理";
+
+                if (files.length === 0 && !gradeData[subName]) return;
+
+                finalHtml += `
+                    <details class="${cssClass}">
+                        <summary>${subName}</summary>
+                        <ul class="page-list">
+                `;
+
+                if (files.length > 0) {
+                    files.forEach(file => {
+                        const label = isRangeType ? formatRangeLabel(file) : formatLabel(file);
+                        const ankiFile = file.replace('ap.html', '.html');
+                        const testFile = ankiFile.replace('.html', 'ap.html');
+                        
+                        finalHtml += `
+                            <li class="page-item">
+                                <span class="p-range">${label}</span>
+                                <div class="btn-group">
+                                    <a href="${baseURL}${ankiFile}" class="action-btn btn-anki" target="_blank">暗記</a>
+                                    <a href="${baseURL}${testFile}" class="action-btn btn-test" target="_blank">テスト</a>
+                                </div>
+                            </li>`;
+                    });
+                } else {
+                    finalHtml += `
+                        <li class="page-item">
+                            <span class="p-range">準備中...</span>
+                            <div class="btn-group">
+                                <a href="#" class="action-btn btn-anki btn-disabled">暗記</a>
+                                <a href="#" class="action-btn btn-test btn-disabled">テスト</a>
+                            </div>
+                        </li>`;
+                }
+                finalHtml += `</ul></details>`;
+            });
+            finalHtml += `</div>`;
+        });
+        contentArea.innerHTML = finalHtml;
+    }
+
+    window.onload = render;
+</script>
+
+</body>
+</html>
